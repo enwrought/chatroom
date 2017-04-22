@@ -1,0 +1,129 @@
+swagger: 2.0
+info:
+  title: "API Gateway"
+  description: ""
+  version: "2017-04-17"
+schemes:
+- https
+paths:
+  /chats/{chatId}:
+    get:
+      description: "Retrieves history of chatroom"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Message"
+        400:
+          schema:
+            $ref: "#/definitions/Error"
+      x-aws-apigateway-integration:
+        type: "aws"
+        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaName}/invocations"
+    post:
+      description: "Sends a chat to the chatroom {chatId}"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        schema:
+          $ref: "#/definitions/Message"
+      responses:
+        200:
+          schema:
+            $ref: "#/definitions/Empty"
+        400:
+          schema:
+            $ref: "#/definitions/Error"
+  /chats:
+    post:
+      description: "Creates a new chatroom"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        schema:
+          type: "array"
+          items:
+            type: "string"
+      responses:
+        201:
+          description: "Successfully created a new chatroom"
+          schema:
+            type: "string"
+        400:
+          schema:
+            $ref: "#/definitions/Error"
+      x-aws-apigateway-integration:
+        type: "aws"
+        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaName}/invocations"
+  /users:
+    post:
+      description: "Create a new user account"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        schema:
+          $ref: "#/definitions/UserInfo"
+      responses:
+        201:
+          description: "Successfully created a new user"
+        400:
+          schema:
+            $ref: "#/definitions/Error"
+    get:
+      description: "Get list of all users (will probably need to be changed for security/privacy)"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/UserInfo"
+        400:
+          schema:
+            $ref: "#/definitions/Error"
+      x-aws-apigateway-integration:
+        type: "aws"
+        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaName}/invocations"
+definitions:
+  Empty:
+    type: "object"
+  Error:
+    type: "object"
+  Message:
+    description: "A single message object"
+    type: "object"
+    required:
+    - "userId"
+    - "message"
+    properties:
+      userId:
+        type: "string"
+      message:
+        type: "string"
+      timestamp:
+        description: "ISO 8601 E8601DTw.d date-time format (ie: 2008-09-15T15:53:00)"
+        type: "string"
+  UserInfo:
+    description: "Publicly available information about a user"
+    type: "object"
+    required:
+    - "name"
+    properties:
+      name:
+        type: "string"
