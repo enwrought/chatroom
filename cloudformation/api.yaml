@@ -22,7 +22,7 @@ paths:
             $ref: "#/definitions/Error"
       x-aws-apigateway-integration:
         type: "aws"
-        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaName}/invocations"
+        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:${lambdaName}/invocations"
     post:
       description: "Sends a chat to the chatroom {chatId}"
       consumes:
@@ -65,7 +65,7 @@ paths:
             $ref: "#/definitions/Error"
       x-aws-apigateway-integration:
         type: "aws"
-        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaName}/invocations"
+        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:${lambdaName}/invocations"
   /users:
     post:
       description: "Create a new user account"
@@ -84,6 +84,9 @@ paths:
         400:
           schema:
             $ref: "#/definitions/Error"
+      x-aws-apigateway-integration:
+        type: "aws"
+        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:${lambdaName}/invocations"
     get:
       description: "Get list of all users (will probably need to be changed for security/privacy)"
       produces:
@@ -99,7 +102,8 @@ paths:
             $ref: "#/definitions/Error"
       x-aws-apigateway-integration:
         type: "aws"
-        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaName}/invocations"
+        # TODO: replace variables
+        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:${lambdaName}/invocations"
 definitions:
   Empty:
     type: "object"

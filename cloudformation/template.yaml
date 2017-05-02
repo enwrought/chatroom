@@ -1,15 +1,36 @@
+Description: Alpaca
 AWSTemplateFormatVersion: '2010-09-09'
 
+Parameters:
+  LambdaS3Bucket:
+    Description: S3 Bucket where the ChatOrchestrator Lambda code is stored
+    Type: String
+    Default: 'axolotl-alpaca'
+  LambdaS3Key:
+    Description: Key of the zip file of the code inside LambdaS3Bucket
+    Type: String
+    Default: 'lambdas/lambda.zip'
 Resources:
-  LambdaFunctionOverHttps:
-    Type: AWS::Serverless::Function
+  ChatOrchestrator:
+    Type: AWS::Lambda::Function
     Properties:
-      Handler: handler
-      Runtime: runtime
-      Policies: AmazonDynamoDBFullAccess
-      Events:
-        HttpPost:
-          Type: Api
-          Properties:
-            Path: 'DynamoDBOperations/DynamoDBManager'
-            Method: post
+      Code:
+        S3Bucket: !Ref LambdaS3Bucket
+        S3Key: !Ref LambdaS3Key
+      Handler: lambda.handler
+      Role: !GetAtt ChatOrchestratorRole.Arn
+      Runtime: nodejs4.3
+      MemorySize: 256
+      Timeout: 30
+  ChatOrchestratorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole

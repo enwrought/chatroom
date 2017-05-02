@@ -1,4 +1,6 @@
 .idea
 dist
 node_modules
-
+flow-typed
+build
+.DS_Store
