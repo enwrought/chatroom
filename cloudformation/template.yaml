@@ -3,26 +3,27 @@ AWSTemplateFormatVersion: '2010-09-09'
 
 Parameters:
   LambdaS3Bucket:
-    Description: S3 Bucket where the ChatOrchestrator Lambda code is stored
+    Description: S3 Bucket where the ChatService Lambda code is stored
     Type: String
     Default: 'axolotl-alpaca'
   LambdaS3Key:
     Description: Key of the zip file of the code inside LambdaS3Bucket
     Type: String
-    Default: 'lambdas/lambda.zip'
+    Default: '${zipLambdaKey}'
 Resources:
-  ChatOrchestrator:
+  ChatService:
     Type: AWS::Lambda::Function
     Properties:
       Code:
         S3Bucket: !Ref LambdaS3Bucket
         S3Key: !Ref LambdaS3Key
       Handler: lambda.handler
-      Role: !GetAtt ChatOrchestratorRole.Arn
+      Role: !GetAtt ChatServiceRole.Arn
       Runtime: nodejs4.3
       MemorySize: 256
       Timeout: 30
-  ChatOrchestratorRole:
+      FunctionName: ${LambdaName}
+  ChatServiceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -34,3 +35,34 @@ Resources:
             - lambda.amazonaws.com
           Action:
           - sts:AssumeRole
+  ChatAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      BodyS3Location:
+        Bucket: !Ref LambdaS3Bucket
+        Key: ${ApiTemplateKey}
+  ChatAPIRole:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+    - ChatAPI
+    - ChatServiceRole
+    Properties:
+      FunctionName: !GetAtt ChatService.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ChatAPI}/*"
+  ChatAPIDeployment:
+    DependsOn:
+    - ChatAPI
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref ChatAPI
+      StageName: "main"
+      StageDescription:
+        StageName: "main"
+        Description: "Deployment for Chat API"
+
+Outputs:
+  ChatServiceURL:
+    Description: "URL for backend chat service"
+    Value: !Sub "https://${ChatAPI}.execute-api.${AWS::Region}.amazonaws.com"

@@ -15,17 +15,49 @@ type Event = {
   queryStringParameters: Object
 };
 
-export default function handler(event: Event, context: Object, callback: Function): [Object] | Object | string {
-  const tmp: HttpMethod = HTTP_METHOD.PUT;
+type OutputEvent = {
+  statusCode: number,
+  headers: Object,
+  body: string
+};
+
+function wrapResponse(body: any): OutputEvent {
+  return {
+    statusCode: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  };
+}
+
+function handler(event: Event, context: Object, callback: Function): void {
+  let result;
+
   switch (event.resource) {
     case '/chats':
+      result = {};
+      break;
     case '/chats/{chatId}':
+      result = {};
+      break;
     case '/users':
-      return handleUsers(event.httpMethod, event.body);
+      result = handleUsers(event.httpMethod, event.body);
+      break;
     default:
       // TODO: clean up errors in class
-      return {
+      result = {
         error: ''
       };
   }
+  // console.log({
+  //   method: event.httpMethod,
+  //   resource: event.resource,
+  //   result
+  // });
+
+  callback(null, wrapResponse(result));
 }
+
+exports.handler = handler;

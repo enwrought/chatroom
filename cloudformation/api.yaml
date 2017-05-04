@@ -1,8 +1,10 @@
 swagger: 2.0
 info:
   title: "API Gateway"
-  description: ""
+  description: "API Gateway for Chat Service"
   version: "2017-04-17"
+host: "api.amazonaws.com"
+basePath: "/"
 schemes:
 - https
 paths:
@@ -17,12 +19,22 @@ paths:
             type: "array"
             items:
               $ref: "#/definitions/Message"
-        400:
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+        500:
           schema:
             $ref: "#/definitions/Error"
-      x-aws-apigateway-integration:
-        type: "aws"
-        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:${lambdaName}/invocations"
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+      x-amazon-apigateway-integration:
+        type: "aws_proxy"
+        httpMethod: POST
+        responses:
+          default:
+            statusCode: "500"
+        uri: "arn:aws:apigateway:${AWSRegion}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWSRegion}:${AccountId}:function:${LambdaName}/invocations"            
     post:
       description: "Sends a chat to the chatroom {chatId}"
       consumes:
@@ -38,9 +50,22 @@ paths:
         200:
           schema:
             $ref: "#/definitions/Empty"
-        400:
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+        500:
           schema:
             $ref: "#/definitions/Error"
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        responses:
+          default:
+            statusCode: "500"
+        uri: "arn:aws:apigateway:${AWSRegion}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWSRegion}:${AccountId}:function:${LambdaName}/invocations"
   /chats:
     post:
       description: "Creates a new chatroom"
@@ -60,12 +85,22 @@ paths:
           description: "Successfully created a new chatroom"
           schema:
             type: "string"
-        400:
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+        500:
           schema:
             $ref: "#/definitions/Error"
-      x-aws-apigateway-integration:
-        type: "aws"
-        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:${lambdaName}/invocations"
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        responses:
+          default:
+            statusCode: "500"
+        uri: "arn:aws:apigateway:${AWSRegion}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWSRegion}:${AccountId}:function:${LambdaName}/invocations"
   /users:
     post:
       description: "Create a new user account"
@@ -81,12 +116,25 @@ paths:
       responses:
         201:
           description: "Successfully created a new user"
-        400:
+          schema:
+            $ref: "#/defintions/Empty"
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+        500:
           schema:
             $ref: "#/definitions/Error"
-      x-aws-apigateway-integration:
-        type: "aws"
-        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:${lambdaName}/invocations"
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+      x-amazon-apigateway-integration:
+        responses:
+          default:
+            statusCode: "500"
+        uri: "arn:aws:apigateway:${AWSRegion}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWSRegion}:${AccountId}:function:${LambdaName}/invocations"
+        passthroughBehavior: when_no_match
+        httpMethod: POST
+        type: aws_proxy
     get:
       description: "Get list of all users (will probably need to be changed for security/privacy)"
       produces:
@@ -97,13 +145,23 @@ paths:
             type: "array"
             items:
               $ref: "#/definitions/UserInfo"
-        400:
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+        500:
           schema:
             $ref: "#/definitions/Error"
-      x-aws-apigateway-integration:
-        type: "aws"
-        # TODO: replace variables
-        uri: "arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:${lambdaName}/invocations"
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        responses:
+          default:
+            statusCode: "500"
+        uri: "arn:aws:apigateway:${AWSRegion}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWSRegion}:${AccountId}:function:${LambdaName}/invocations"
+        passthroughBehavior: when_no_match
 definitions:
   Empty:
     type: "object"

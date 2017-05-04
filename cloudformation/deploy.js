@@ -7,9 +7,12 @@ const _cloudformation = new AWS.CloudFormation();
 const _s3 = new AWS.S3();
 
 const templateBucket = process.env.BucketName;
-const templateKey = `${process.env.BucketFolder}/${process.env.CloudFormationTemplateName}`;
-const apiTemplateKey = `${process.env.BucketFolder}/${process.env.APITemplateName}`;
-const zipLambdaKey = `${process.env.LambdaBucketFolder}/${process.env.LambdaFileName}`;
+const identifier = new Date().toISOString().substring(0, 19).split(':').join('');
+const lambdaName = `${process.env.LambdaFileName}-${identifier}`;
+
+const zipLambdaKey = `${process.env.LambdaBucketFolder}/${lambdaName}.zip`;
+const templateKey = `${process.env.BucketFolder}/${process.env.CloudFormationTemplateName}-${identifier}.yaml`;
+const apiTemplateKey = `${process.env.BucketFolder}/${process.env.APITemplateName}-${identifier}.yaml`;
 const stackName = process.env.StackName || 'test-stack';
 
 export default function deploy(): void {
@@ -21,8 +24,8 @@ export default function deploy(): void {
   };
 
   // zipLambda();
-  const uploadTemplate = uploadFile('./cloudformation/template.yaml', templateKey);
-  const uploadAPI = uploadFile('./cloudformation/api.yaml', apiTemplateKey);
+  const uploadTemplate = uploadTextFile('./cloudformation/template.yaml', templateKey);
+  const uploadAPI = uploadTextFile('./cloudformation/api.yaml', apiTemplateKey);
   const uploadLambda = uploadFile('./build/lambda.zip', zipLambdaKey);
 
   const uploads = Promise.all([uploadAPI, uploadTemplate, uploadLambda]);
@@ -48,7 +51,7 @@ export default function deploy(): void {
     )
     .then(
       () => {
-        console.log('Updated successfully!');
+        console.log('Successfully sent request to AWS. Check cloudformation.');
       },
       err => {
         console.log(err);
@@ -67,12 +70,40 @@ export function zipLambda(): void {
   zipFile.finalize();
 }
 
+function replaceAll(inStr: string): string {
+  let result = inStr;
+  // TODO: should use a different format to replace strings since !Ref uses the ${variable} format
+  const regexMap = {
+    '\\$\\{zipLambdaKey\\}': zipLambdaKey,
+    '\\$\\{ApiTemplateKey\\}': apiTemplateKey,
+    '\\$\\{LambdaName\\}': lambdaName,
+    '\\$\\{AWSRegion\\}': process.env.AWSRegion || '',
+    '\\$\\{AccountId\\}': process.env.AccountId || ''
+  };
+
+  Object.keys(regexMap).forEach(key => {
+    result = result.replace(new RegExp(key, 'g'), regexMap[key]);
+  });
+
+  return result;
+}
+
 function uploadFile(fileName: string, key: string): Promise<any> {
   return _s3
     .upload({
       Bucket: templateBucket,
       Key: key,
       Body: fs.createReadStream(fileName)
+    })
+    .promise();
+}
+
+function uploadTextFile(fileName: string, key: string): Promise<any> {
+  return _s3
+    .upload({
+      Bucket: templateBucket,
+      Key: key,
+      Body: replaceAll(fs.readFileSync(fileName, { encoding: 'UTF-8' }))
     })
     .promise();
 }
